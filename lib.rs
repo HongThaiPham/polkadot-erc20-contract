@@ -13,14 +13,39 @@ mod erc20 {
         balances: ink_storage::collections::HashMap<AccountId, Balance>,
     }
 
+    #[ink(event)]
+    pub struct Transfer {
+    //  ACTION: Create a `Transfer` event with:
+    //          * from: Option<AccountId>
+    //          * to: Option<AccountId>
+    //          * value: Balance
+        #[ink(topic)]
+        from: Option<AccountId>,
+        #[ink(topic)]
+        to: Option<AccountId>,
+        value: Balance
+    }
+
     impl Erc20 {
         #[ink(constructor)]
         pub fn new(initial_supply: Balance) -> Self {
+            // ACTION: `set` the total supply to `initial_supply`
+            // ACTION: `insert` the `initial_supply` as the `caller` balance
             let _caller = Self::env().caller();
             let mut _balances = ink_storage::collections::HashMap::new();
             _balances.insert(_caller, initial_supply);
-            // ACTION: `set` the total supply to `initial_supply`
-            // ACTION: `insert` the `initial_supply` as the `caller` balance
+           
+
+            // ACTION: Call `Self::env().emit_event` with the `Transfer` event
+            //   HINT: Since we use `Option<AccountId>`, you need to wrap accounts in `Some()`
+            Self::env().emit_event(
+                Transfer {
+                    from: None,
+                    to: Some(_caller),
+                    value: initial_supply
+                }
+            );
+            
             Self {
                 total_supply: initial_supply, 
                 balances: _balances
@@ -63,6 +88,16 @@ mod erc20 {
             // self.balances.entry(to).and_modify(|_to_balance| *_to_balance += value).or_insert(value);
             self.balances.insert(from, _from_balance - value);
             self.balances.insert(to, _to_balance + value);
+
+            // ACTION: Call `self.env().emit_event` with the `Transfer` event
+            //   HINT: Since we use `Option<AccountId>`, you need to wrap accounts in `Some()`
+            self.env().emit_event(
+                Transfer {
+                    from: Some(from),
+                    to: Some(to),
+                    value: value
+                }
+            );
             // ACTION: Return `true`
             true
         }
